@@ -3,13 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "InputActionValue.h"
 #include "GameFramework/PlayerController.h"
 #include "NeonPlayerController.generated.h"
 
-struct FInputActionValue;
-class UInputAction;
+class USplineComponent;
 class UInputMappingContext;
+class UInputAction;
+class UNeonInputConfig;
+class IEnemyInterface;
+struct FInputActionValue;
 /**
  * 
  */
@@ -21,17 +23,40 @@ class AURA_API ANeonPlayerController : public APlayerController
 public:
 
 	ANeonPlayerController();
+	virtual void SetupInputComponent() override;
 	
 protected:
 
 	virtual void BeginPlay() override;
-	virtual void SetupInputComponent() override;
+	virtual void PlayerTick(float DeltaTime) override;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+private:
+	
+	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputMappingContext> DefaultMappingContext;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	UPROPERTY(EditDefaultsOnly, Category="Input")
+	TObjectPtr<UNeonInputConfig> InputConfig;
+
+	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputAction> MoveAction;
 
+	UPROPERTY(EditDefaultsOnly, Category="Nav")
+	TObjectPtr<USplineComponent> Spline;
+
+	UPROPERTY(EditDefaultsOnly)
+	float AutoRunAcceptanceRadius = 50.f;
+	
 	void Move(const FInputActionValue& ActionValue);
+	void AbilityInputTagPressed();
+	void AbilityInputTagReleased();
+	void AbilityInputActionTagHeld();
+
+	void CursorTrace();
+	FHitResult CursorHit;
+	void AutoRun();
+	FVector CachedDestination = FVector::ZeroVector;
+	bool bAutoRunning;
+	
+
 };

@@ -5,10 +5,16 @@
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "InputActionValue.h"
+#include "NavigationPath.h"
+#include "NavigationSystem.h"
+#include "Components/SplineComponent.h"
+#include "Input/NeonInputComponent.h"
 
 ANeonPlayerController::ANeonPlayerController()
 {
 	bReplicates = true;
+
+	Spline = CreateDefaultSubobject<USplineComponent>("Spline");
 }
 
 void ANeonPlayerController::BeginPlay()
@@ -29,13 +35,44 @@ void ANeonPlayerController::BeginPlay()
 	SetInputMode(InputModeData);
 }
 
+void ANeonPlayerController::PlayerTick(float DeltaTime)
+{
+	Super::PlayerTick(DeltaTime);
+
+	CursorTrace();
+	AutoRun();
+}
+
+void ANeonPlayerController::CursorTrace()
+{
+	GetHitResultUnderCursor(ECC_Visibility, false, CursorHit);
+}
+
+void ANeonPlayerController::AutoRun()
+{
+	if (!bAutoRunning) return;
+	if (APawn* ControlledPawn = GetPawn())
+	{
+		const FVector LocationOnSpline = Spline->FindLocationClosestToWorldLocation(ControlledPawn->GetActorLocation(), ESplineCoordinateSpace::World);
+		const FVector Direction = Spline->FindDirectionClosestToWorldLocation(LocationOnSpline, ESplineCoordinateSpace::World);
+		ControlledPawn->AddMovementInput(Direction);
+
+		const float DistanceToDestination = (LocationOnSpline - CachedDestination).Length();
+		if (DistanceToDestination <= AutoRunAcceptanceRadius)
+		{
+			bAutoRunning = false;
+		}
+	}
+}
+
+
 void ANeonPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
-
-	UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(InputComponent);
-
-	EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ANeonPlayerController::Move);
+	
+	UNeonInputComponent* NeonInputComponent = CastChecked<UNeonInputComponent>(InputComponent);
+	NeonInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ANeonPlayerController::Move);
+	NeonInputComponent->BindAbilityActions(InputConfig, this, &ThisClass::AbilityInputTagPressed, &ThisClass::AbilityInputTagReleased, &ThisClass::AbilityInputActionTagHeld);
 }
 
 void ANeonPlayerController::Move(const FInputActionValue& InputActionValue)
@@ -57,4 +94,43 @@ void ANeonPlayerController::Move(const FInputActionValue& InputActionValue)
 		ControlledPawn->AddMovementInput(RightDirection, InputAxisVector.X);
 	}
 }
+
+
+void ANeonPlayerController::AbilityInputTagPressed()
+{
+	
+}
+
+void ANeonPlayerController::AbilityInputTagReleased()
+{
+	APawn* ControlledPawn = GetPawn();
+	if (!ControlledPawn || !Spline || !CursorHit.bBlockingHit) return;
+
+	CachedDestination = CursorHit.ImpactPoint;
+
+	if (UNavigationPath* NavPath =
+		UNavigationSystemV1::FindPathToLocationSynchronously(this, ControlledPawn->GetActorLocation(), CachedDestination))
+	{
+		if (NavPath->PathPoints.Num() > 0)
+		{
+			Spline->ClearSplinePoints();
+			for (const FVector& PointLoc : NavPath->PathPoints)
+			{
+				Spline->AddSplinePoint(PointLoc, ESplineCoordinateSpace::World);
+			}
+			if (NavPath->PathPoints.Num() > 0)
+			{
+				CachedDestination = NavPath->PathPoints[NavPath->PathPoints.Num() - 1];
+				DrawDebugSphere(GetWorld(), CachedDestination, 10.f, 10, FColor::Green, false, 0.1f);
+				bAutoRunning = true;
+			}
+		}
+	}
+}
+
+void ANeonPlayerController::AbilityInputActionTagHeld()
+{
+	
+}
+
 
