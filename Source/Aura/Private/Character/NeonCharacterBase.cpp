@@ -9,7 +9,7 @@ ANeonCharacterBase::ANeonCharacterBase()
  	PrimaryActorTick.bCanEverTick = false;
 
 	Weapon = CreateDefaultSubobject<USkeletalMeshComponent>("Weapon");
-	Weapon->SetupAttachment(GetMesh(),"WeaponSocket");
+	Weapon->SetupAttachment(GetMesh(), FName("WeaponSocket")); // FName() kullanmak daha güvenli.
 	Weapon->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 }
@@ -17,7 +17,12 @@ ANeonCharacterBase::ANeonCharacterBase()
 void ANeonCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+}
+
+UAbilitySystemComponent* ANeonCharacterBase::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
 }
 
 

@@ -54,6 +54,8 @@ private:
 
 	void CursorTrace();
 	FHitResult CursorHit;
+	TScriptInterface<IEnemyInterface> LastActor;
+	TScriptInterface<IEnemyInterface> ThisActor;
 	void AutoRun();
 	FVector CachedDestination = FVector::ZeroVector;
 	bool bAutoRunning;

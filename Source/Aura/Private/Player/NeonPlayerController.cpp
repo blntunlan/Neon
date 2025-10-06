@@ -9,6 +9,7 @@
 #include "NavigationSystem.h"
 #include "Components/SplineComponent.h"
 #include "Input/NeonInputComponent.h"
+#include "Interaction/EnemyInterface.h"
 
 ANeonPlayerController::ANeonPlayerController()
 {
@@ -46,6 +47,33 @@ void ANeonPlayerController::PlayerTick(float DeltaTime)
 void ANeonPlayerController::CursorTrace()
 {
 	GetHitResultUnderCursor(ECC_Visibility, false, CursorHit);
+	if (!CursorHit.bBlockingHit) return;
+
+	LastActor = ThisActor;
+	ThisActor = CursorHit.GetActor();
+
+	if (LastActor == nullptr)
+	{
+		if (ThisActor != nullptr)
+		{
+			ThisActor->HighlightActor();
+		}
+	}
+	else
+	{
+		if (ThisActor == nullptr)
+		{
+			LastActor->UnHighlightActor();
+		}
+		else
+		{
+			if (LastActor != ThisActor)
+			{
+				LastActor->UnHighlightActor();
+				ThisActor->HighlightActor();
+			}
+		}
+	}
 }
 
 void ANeonPlayerController::AutoRun()
