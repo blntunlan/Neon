@@ -3,7 +3,9 @@
 #include "Character/NeonCharacter.h"
 #include "AbilitySystem/NeonAbilitySystemComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Player/NeonPlayerController.h"
 #include "Player/NeonPlayerState.h"
+#include "UI/HUD/NeonHUD.h"
 
 ANeonCharacter::ANeonCharacter()
 {
@@ -58,4 +60,13 @@ void ANeonCharacter::InitAbilityActorInfo()
 	}
 
 	AttributeSet = NeonPS->GetAttributeSet();
+
+	if (ANeonPlayerController* NeonPlayerController = Cast<ANeonPlayerController>(GetController()))
+	{
+		if (ANeonHUD* NeonHUD = Cast<ANeonHUD>(NeonPlayerController->GetHUD()))
+		{
+			NeonHUD->InitOverlay(NeonPlayerController, NeonPS, ASC, AttributeSet);
+		}
+	}
+	
 }

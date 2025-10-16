@@ -6,6 +6,10 @@
 #include "GameFramework/HUD.h"
 #include "NeonHUD.generated.h"
 
+class UAttributeSet;
+class UAbilitySystemComponent;
+struct FWidgetControllerParams;
+class UOverlayWidgetController;
 class UNeonUserWidget;
 /**
  * 
@@ -20,13 +24,20 @@ public:
 	UPROPERTY()
 	TObjectPtr<UNeonUserWidget> OverlayWidget;
 
-protected:
+	UOverlayWidgetController* GetOverlayWidgetController(const FWidgetControllerParams& Params);
 
-	virtual void BeginPlay() override;
+	UFUNCTION()
+	void InitOverlay(APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC, UAttributeSet* AS);
 
 private:
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UNeonUserWidget> OverlayWidgetClass;
+
+	UPROPERTY()
+	TObjectPtr<UOverlayWidgetController> OverlayWidgetController;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UOverlayWidgetController> OverlayWidgetControllerClass;
 
 };
